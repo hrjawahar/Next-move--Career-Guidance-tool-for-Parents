@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MyCareerReflection – TN</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+<div class="max-w-4xl mx-auto p-4">
+
+  <!-- Top bar -->
+  <div class="flex items-center justify-between gap-2 mb-3">
+    <div class="text-xs text-gray-600 px-2 py-1 bg-white border rounded">
+      <span data-i18n="pilot"></span>
+      <span class="ml-2 text-gray-400">v1.1</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <a target="_blank"
+         class="text-xs px-3 py-2 rounded bg-white border hover:bg-gray-100"
+         href="https://docs.google.com/forms/d/1EWr-LBGX4SCwA6HnqIxiIx6zDP2Cum9ZgC8yxR8B5wU/viewform">
+        <span data-i18n="feedback"></span>
+      </a>
+
+      <select id="lang" class="border p-2 text-xs rounded bg-white">
+        <option value="en">English</option>
+        <option value="ta">தமிழ்</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="bg-yellow-100 text-xs p-3 rounded mb-4 border border-yellow-200">
+    <div class="font-semibold mb-1" data-i18n="disclaimerTitle"></div>
+    <div data-i18n="disclaimer"></div>
+  </div>
+
+  <!-- Header -->
+  <div class="text-center mb-4">
+    <h1 class="text-xl font-semibold" data-i18n="title"></h1>
+    <div class="text-xs text-gray-500 mt-1" data-i18n="subtitle"></div>
+  </div>
+
+  <!-- Mode Selection -->
+  <div class="flex gap-3 justify-center mb-6">
+    <button id="btnMode10" onclick="setMode('10')"
+      class="px-4 py-2 bg-blue-600 text-white rounded hover:opacity-95"
+      data-i18n="mode10"></button>
+
+    <button id="btnMode12" onclick="setMode('12')"
+      class="px-4 py-2 bg-green-600 text-white rounded hover:opacity-95"
+      data-i18n="mode12"></button>
+  </div>
+
+  <!-- Loading / error state -->
+  <div id="dataStatus" class="hidden text-xs bg-white border rounded p-3 mb-4"></div>
+
+  <!-- Form -->
+  <div id="formSection" class="hidden space-y-3">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <input id="studentName" class="w-full border p-2 rounded bg-white"
+        data-i18n-placeholder="studentName" />
+      <input id="schoolName" class="w-full border p-2 rounded bg-white"
+        data-i18n-placeholder="schoolName" />
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <input id="marks" type="number" class="w-full border p-2 rounded bg-white"
+        data-i18n-placeholder="totalMarks" />
+
+      <select id="interest" class="w-full border p-2 rounded bg-white">
+        <option value="" data-i18n="interestPlaceholder"></option>
+        <option value="ai" data-i18n="interest_ai"></option>
+        <option value="datascience" data-i18n="interest_datascience"></option>
+        <option value="cse" data-i18n="interest_cse"></option>
+        <option value="engineering" data-i18n="interest_engineering"></option>
+        <option value="business" data-i18n="interest_business"></option>
+        <option value="economics" data-i18n="interest_economics"></option>
+        <option value="commerce" data-i18n="interest_commerce"></option>
+        <option value="design" data-i18n="interest_design"></option>
+        <option value="medical" data-i18n="interest_medical"></option>
+        <option value="arts" data-i18n="interest_arts"></option>
+      </select>
+    </div>
+
+    <!-- District filter -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <select id="district" class="w-full border p-2 rounded bg-white">
+        <option value="" data-i18n="districtPlaceholder"></option>
+        <!-- options injected -->
+      </select>
+
+      <select id="budget" class="w-full border p-2 rounded bg-white">
+        <option value="" data-i18n="budgetPlaceholder"></option>
+        <option value="low" data-i18n="budget_low"></option>
+        <option value="mid" data-i18n="budget_mid"></option>
+        <option value="open" data-i18n="budget_open"></option>
+      </select>
+    </div>
+
+    <!-- Cockpit trigger -->
+    <button onclick="toggleDecision()"
+      class="w-full bg-purple-600 text-white py-2 rounded hover:opacity-95"
+      data-i18n="needSuggestion"></button>
+
+    <div class="text-[11px] text-gray-500" data-i18n="tip"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" class="mt-6 space-y-2"></div>
+
+  <!-- Footer -->
+  <div class="mt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs text-gray-500">
+    <div data-i18n="footerNote"></div>
+    <a target="_blank"
+       class="underline hover:text-gray-800"
+       href="https://docs.google.com/forms/d/1EWr-LBGX4SCwA6HnqIxiIx6zDP2Cum9ZgC8yxR8B5wU/viewform"
+       data-i18n="feedback"></a>
+  </div>
+
+</div>
+
+<script>
+/* -------------------------
+   HELPERS
+-------------------------- */
+const $ = (id) => document.getElementById(id);
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function setStatus(msg, kind="info"){
+  const el = $("dataStatus");
+  el.classList.remove("hidden");
+  el.className = "text-xs bg-white border rounded p-3 mb-4";
+  if(kind === "error") el.classList.add("border-red-300", "bg-red-50");
+  if(kind === "ok") el.classList.add("border-green-300", "bg-green-50");
+  el.textContent = msg;
+}
+
+/* -------------------------
+   TRANSLATIONS
+-------------------------- */
+const translations = {
+  en: {
+    pilot: "TN Pilot",
+    title: "MyCareerReflection – TN Decision Engine",
+    subtitle: "10th / 12th • Marks + Interest → suggestions",
+
+    disclaimerTitle: "Disclaimer",
+    disclaimer: "Indicative suggestions only. Final admission depends on official counselling, category reservation, cut-off variations and institutional policies. Please verify with official sources.",
+
+    mode10: "10th",
+    mode12: "12th",
+
+    studentName: "Student Name",
+    schoolName: "School / College",
+    totalMarks: "Total Marks",
+
+    interestPlaceholder: "Interest",
+    districtPlaceholder: "District (optional)",
+    budgetPlaceholder: "Budget (optional)",
+    budget_low: "Low",
+    budget_mid: "Medium",
+    budget_open: "Open",
+
+    needSuggestion: "Need Suggestion?",
+    tip: "Level 1 prototype. Suggestions are based on tag matching + starter eligibility logic.",
+
+    alertNeed: "Enter marks & interest",
+    noMatches: "No close matches in dataset for this input.",
+    loadOk: "College data loaded.",
+    loadErr: "Could not load college data. Check /data/tn-colleges.json path and deployment.",
+    scoreLabel: "Score",
+    programLabel: "Matched Programs",
+    tierLabel: "Tier",
+    website: "Website",
+    feedback: "Feedback",
+    footerNote: "Help improve this tool by sharing 30-second feedback."
+  },
+  ta: {
+    pilot: "தமிழ்நாடு முயற்சி",
+    title: "MyCareerReflection – தமிழ்நாடு வழிகாட்டு அமைப்பு",
+    subtitle: "10ம் / 12ம் • மதிப்பெண் + விருப்பம் → பரிந்துரைகள்",
+
+    disclaimerTitle: "அறிவிப்பு",
+    disclaimer: "இது வழிகாட்டும் பரிந்துரைகள் மட்டும். இறுதி சேர்க்கை அதிகாரப்பூர்வ ஆலோசனை, இடஒதுக்கீடு, கட்டுப்பெண் மாறுபாடுகள் மற்றும் கல்வி நிறுவன விதிமுறைகளுக்கு உட்பட்டது. அதிகாரப்பூர்வ தகவல்களுடன் உறுதிப்படுத்தவும்.",
+
+    mode10: "10ம் வகுப்பு",
+    mode12: "12ம் வகுப்பு",
+
+    studentName: "மாணவர் பெயர்",
+    schoolName: "பள்ளி / கல்லூரி",
+    totalMarks: "மொத்த மதிப்பெண்கள்",
+
+    interestPlaceholder: "விருப்பம்",
+    districtPlaceholder: "மாவட்டம் (விருப்பம்)",
+    budgetPlaceholder: "செலவு (விருப்பம்)",
+    budget_low: "குறைவு",
+    budget_mid: "மிதம்",
+    budget_open: "பரவாயில்லை",
+
+    needSuggestion: "பரிந்துரை வேண்டுமா?",
+    tip: "நிலை 1 மாதிரி. குறிச்சொற்கள் (tags) + தொடக்க தகுதி விதிகளின் அடிப்படையில்.",
+
+    alertNeed: "மதிப்பெண்களும் விருப்பமும் கொடுக்கவும்",
+    noMatches: "இந்த உள்ளீட்டிற்கு தரவுத்தொகுப்பில் பொருத்தம் இல்லை.",
+    loadOk: "கல்லூரி தரவு ஏற்றப்பட்டது.",
+    loadErr: "கல்லூரி தரவை ஏற்ற முடியவில்லை. /data/tn-colleges.json பாதை மற்றும் deployment சரிபார்க்கவும்.",
+    scoreLabel: "மதிப்பு",
+    programLabel: "பொருந்தும் பாடங்கள்",
+    tierLabel: "நிலை",
+    website: "இணையதளம்",
+    feedback: "கருத்து",
+    footerNote: "இந்த கருவியை மேம்படுத்த 30 விநாடி கருத்தை பகிரவும்."
+  }
+};
+
+let LANG = "en";
+
+function applyLanguage(lang){
+  LANG = lang;
+
+  document.body.style.fontFamily = (lang === "ta")
+    ? "'Noto Sans Tamil', system-ui, sans-serif"
+    : "system-ui, sans-serif";
+
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    const val = translations[lang][key];
+    if (typeof val === "string") el.textContent = val;
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    const val = translations[lang][key];
+    if (typeof val === "string") el.placeholder = val;
+  });
+}
+
+$("lang").addEventListener("change", function(){
+  applyLanguage(this.value);
+  // re-render district placeholder + options labels remain same (district names are proper nouns)
+  rebuildDistrictOptions();
+});
+
+applyLanguage("en");
+
+/* -------------------------
+   MODE
+-------------------------- */
+let currentMode = null;
+
+function setMode(mode){
+  currentMode = mode;
+  $("formSection").classList.remove("hidden");
+  $("results").innerHTML = "";
+
+  $("btnMode10").classList.toggle("ring-2", mode === "10");
+  $("btnMode12").classList.toggle("ring-2", mode === "12");
+  $("btnMode10").classList.toggle("ring-offset-2", mode === "10");
+  $("btnMode12").classList.toggle("ring-offset-2", mode === "12");
+}
+
+/* -------------------------
+   INTEREST TAG MAP
+-------------------------- */
+const interestTags = {
+  ai:         ["ai","ml","deeplearning","datascience","computing","math"],
+  datascience:["datascience","statistics","math","computing","analytics","ml"],
+  cse:        ["cse","computing","software","systems","ai","datascience"],
+  engineering:["engineering","mechanical","eee","civil","electronics","manufacturing"],
+  business:   ["business","management","finance","operations","entrepreneurship"],
+  economics:  ["economics","data","policy","statistics","math"],
+  commerce:   ["commerce","accounting","finance","business"],
+  design:     ["design","media","ux","visual","communication"],
+  medical:    ["medical","alliedhealth","biology","health","pharmacy"],
+  arts:       ["arts","science","general","humanities","math","biology"]
+};
+
+/* -------------------------
+   LOAD DATASET (/data/tn-colleges.json)
+-------------------------- */
+let colleges = [];
+let districtList = [];
+
+async function loadCollegeData(){
+  try{
+    setStatus(LANG === "ta" ? "தரவு ஏற்றப்படுகிறது..." : "Loading data...");
+    const res = await fetch("./data/tn-colleges.json", { cache: "no-store" });
+    if(!res.ok) throw new Error(String(res.status));
+    const data = await res.json();
+
+    if(!Array.isArray(data)) throw new Error("Invalid JSON: expected array");
+    colleges = data;
+
+    districtList = Array.from(new Set(
+      colleges.map(c => (c.district || "").trim()).filter(Boolean)
+    )).sort((a,b)=> a.localeCompare(b));
+
+    rebuildDistrictOptions();
+
+    setStatus(translations[LANG].loadOk, "ok");
+  }catch(e){
+    colleges = [];
+    districtList = [];
+    rebuildDistrictOptions();
+    setStatus(translations[LANG].loadErr, "error");
+  }
+}
+
+function rebuildDistrictOptions(){
+  const sel = $("district");
+  const current = sel.value;
+
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = translations[LANG].districtPlaceholder;
+  sel.appendChild(opt0);
+
+  for(const d of districtList){
+    const opt = document.createElement("option");
+    opt.value = d;
+    opt.textContent = d;
+    sel.appendChild(opt);
+  }
+
+  // restore selection if still present
+  if(districtList.includes(current)) sel.value = current;
+}
+
+loadCollegeData();
+
+/* -------------------------
+   DECISION ENGINE (close match)
+-------------------------- */
+function toggleDecision(){
+  const marks = Number($("marks").value);
+  const interestKey = $("interest").value;
+  const district = $("district").value.trim();
+  const budget = $("budget").value;
+
+  if(!currentMode){
+    $("results").innerHTML = `<div class="text-sm text-gray-600 bg-white border p-3 rounded">
+      ${escapeHtml(LANG === "ta" ? "முதலில் 10ம் / 12ம் தேர்வு செய்யவும்." : "Select 10th / 12th first.")}
+    </div>`;
+    return;
+  }
+
+  if(!marks || !interestKey){
+    alert(translations[LANG].alertNeed);
+    return;
+  }
+
+  if(!colleges.length){
+    $("results").innerHTML = `<div class="text-sm text-gray-600 bg-white border p-3 rounded">
+      ${escapeHtml(LANG === "ta" ? "தரவு ஏற்றப்படவில்லை. மீண்டும் முயற்சிக்கவும்." : "Dataset not loaded. Try again after fixing data path.")}
+    </div>`;
+    return;
+  }
+
+  const band = getBand(marks);
+  const wanted = new Set(interestTags[interestKey] || []);
+
+  const pool = district
+    ? colleges.filter(c => (c.district || "").trim() === district)
+    : colleges;
+
+  const scored = pool
+    .map(college => scoreCollege(college, wanted, band, budget))
+    .filter(x => x.matchPrograms.length > 0)
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 12);
+
+  renderResults(scored);
+}
+
+function getBand(marks){
+  if(currentMode === "12"){
+    if(marks >= 580) return 5;
+    if(marks >= 540) return 4;
+    if(marks >= 480) return 3;
+    if(marks >= 400) return 2;
+    return 1;
+  } else {
+    if(marks >= 450) return 5;
+    if(marks >= 400) return 4;
+    if(marks >= 350) return 3;
+    if(marks >= 300) return 2;
+    return 1;
+  }
+}
+
+function scoreCollege(college, wantedTagsSet, band, budget){
+  const programMatches = [];
+
+  for(const p of (college.programs || [])){
+    const overlap = (p.tags || []).reduce((acc,t)=> acc + (wantedTagsSet.has(t) ? 1 : 0), 0);
+    if(overlap > 0){
+      programMatches.push({ program: p.name || "Program", overlap });
+    }
+  }
+
+  const bestOverlap = programMatches.length
+    ? Math.max(...programMatches.map(x => x.overlap))
+    : 0;
+
+  const tier = Number.isFinite(college.tier) ? college.tier : 3;
+  const tierBonus = (3 - tier) * 2; // tier1 higher bonus
+  const scoreBase = (bestOverlap * 12) + (band * 6) + tierBonus;
+
+  // Optional budget fit: if college has "feeBand" (low/mid/open), add small bonus if it matches
+  let budgetBonus = 0;
+  if(budget && typeof college.feeBand === "string"){
+    if(college.feeBand === budget) budgetBonus = 2;
+    else if(budget === "open") budgetBonus = 1;
+  }
+
+  const score = scoreBase + budgetBonus;
+
+  programMatches.sort((a,b)=> b.overlap - a.overlap);
+  const matchPrograms = programMatches.slice(0,2).map(x => x.program);
+
+  return { ...college, score, matchPrograms, tier };
+}
+
+/* -------------------------
+   RENDER
+-------------------------- */
+function renderResults(list){
+  const container = $("results");
+  container.innerHTML = "";
+
+  const name = $("studentName").value.trim();
+  const school = $("schoolName").value.trim();
+
+  const header = document.createElement("div");
+  header.className = "bg-white border rounded p-3 text-sm";
+  header.innerHTML = `
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <div class="font-semibold">${escapeHtml(name || (LANG==="ta" ? "மாணவர்" : "Student"))}</div>
+        <div class="text-xs text-gray-500">${escapeHtml(school || (LANG==="ta" ? "பள்ளி/கல்லூரி" : "School/College"))}</div>
+      </div>
+      <a target="_blank"
+         class="text-xs px-3 py-2 rounded bg-gray-100 hover:bg-gray-200"
+         href="https://docs.google.com/forms/d/1EWr-LBGX4SCwA6HnqIxiIx6zDP2Cum9ZgC8yxR8B5wU/viewform">
+         ${escapeHtml(translations[LANG].feedback)}
+      </a>
+    </div>
+  `;
+  container.appendChild(header);
+
+  if(list.length === 0){
+    const empty = document.createElement("div");
+    empty.className = "text-sm text-gray-600 bg-white border p-3 rounded";
+    empty.textContent = translations[LANG].noMatches;
+    container.appendChild(empty);
+    return;
+  }
+
+  list.forEach(item=>{
+    const div = document.createElement("div");
+    div.className = "border p-3 rounded bg-white shadow-sm";
+
+    const city = item.city || "";
+    const district = item.district || "";
+
+    div.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div class="font-semibold">${escapeHtml(item.name || "College")}</div>
+        <div class="text-[11px] text-gray-500">${escapeHtml(translations[LANG].scoreLabel)}: ${item.score}</div>
+      </div>
+
+      <div class="text-[11px] text-gray-500">
+        ${escapeHtml(city)}${city && district ? ", " : ""}${escapeHtml(district)} • ${escapeHtml(translations[LANG].tierLabel)} ${item.tier}
+      </div>
+
+      <div class="text-xs mt-2">
+        <div class="text-[11px] text-gray-500 mb-1">${escapeHtml(translations[LANG].programLabel)}:</div>
+        <div class="flex flex-wrap gap-2">
+          ${item.matchPrograms.map(p => `<span class="px-2 py-1 bg-gray-100 rounded text-[11px]">${escapeHtml(p)}</span>`).join("")}
+        </div>
+      </div>
+
+      ${item.website ? `
+      <a href="${item.website}" target="_blank" class="text-blue-600 text-xs mt-2 inline-block">
+        ${escapeHtml(translations[LANG].website)}
+      </a>` : ``}
+    `;
+    container.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
